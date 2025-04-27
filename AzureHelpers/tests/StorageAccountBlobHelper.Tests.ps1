@@ -25,7 +25,7 @@ Describe "StorageAccountBlobHelper Module Tests" {
 
 Describe "Get-AccessToken Tests - When token is expired" {
     BeforeAll {
-        # Mock Invoke-WithRetry to simulate getting a new token
+        # Mock token retrieval when expired
         Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { @{ access_token = "mock-token"; expires_in = 3600 } }
     }
 
@@ -39,6 +39,11 @@ Describe "Get-AccessToken Tests - When token is expired" {
 }
 
 Describe "Get-AccessToken Tests - When token is valid and cached" {
+    BeforeAll {
+        # If token is cached, calling Invoke-WithRetry should fail (should not be needed)
+        Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { throw "Invoke-WithRetry should not be called for valid cached token!" }
+    }
+
     It "Should use cached token if not expired" {
         $ExecutionContext.SessionState.PSVariable.Set('script:AccessToken', 'cached-token')
         $ExecutionContext.SessionState.PSVariable.Set('script:AccessTokenExpiry', (Get-Date).AddMinutes(30))
@@ -56,7 +61,7 @@ Describe "New-Blob Tests" {
 
     It "Should call Invoke-WithRetry with correct parameters when creating blob" {
         $filePath = "$env:TEMP\mockfile.txt"
-        Set-Content -Path $filePath -Value "Test content"
+        [System.IO.File]::WriteAllText($filePath, "Test content")
 
         New-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt" -FilePath $filePath
 
