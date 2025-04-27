@@ -24,7 +24,8 @@ Describe "StorageAccountBlobHelper Module Tests" {
 }
 
 Describe "Get-AccessToken Tests - When token is expired" {
-    BeforeAll {        
+    BeforeAll {
+        # Mock Invoke-WithRetry to simulate getting a new token
         Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { @{ access_token = "mock-token"; expires_in = 3600 } }
     }
 
@@ -86,4 +87,8 @@ Describe "Remove-Blob Tests" {
     }
 
     It "Should call Invoke-WithRetry to delete blob" {
-        Remove-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobN
+        Remove-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt"
+
+        Assert-MockCalled Invoke-WithRetry -Times 1 -Exactly
+    }
+}
