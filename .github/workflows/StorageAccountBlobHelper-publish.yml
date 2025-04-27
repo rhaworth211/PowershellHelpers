@@ -32,7 +32,7 @@ jobs:
     - name: Run Unit Tests
       shell: pwsh
       run: |
-        Invoke-Pester -Script './StorageAccountBlobHelper.Tests.ps1' -Output Detailed
+        Invoke-Pester -Script './AzureHelpers/tests/StorageAccountBlobHelper.Tests.ps1' -Output Detailed
 
     - name: Publish to PowerShell Gallery
       if: success()
