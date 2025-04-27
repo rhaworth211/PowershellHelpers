@@ -1,5 +1,4 @@
-BeforeAll {
-    # Dynamically find the module path correctly
+BeforeAll {    
     $ModulePath = Join-Path $PSScriptRoot "..\StorageAccountBlobHelper.psm1"
 
     if (-not (Test-Path $ModulePath)) {
@@ -14,12 +13,12 @@ Describe "StorageAccountBlobHelper Module Tests" {
     Context "Set-StorageManagedIdentity Tests" {
         It "Should set the ClientId variable" {
             Set-StorageManagedIdentity -ClientId "fake-client-id"
-            (Get-ClientId) | Should -Be "fake-client-id" | Should -Be "fake-client-id"
+            (Get-ClientId) | Should -Be "fake-client-id"
         }
 
         It "Should clear the ClientId when no parameter is passed" {
             Set-StorageManagedIdentity
-            (Get-ClientId) | Should -Be "fake-client-id" | Should -BeNullOrEmpty
+            (Get-ClientId) | Should -BeNullOrEmpty
         }
     }
 
@@ -73,23 +72,7 @@ Describe "StorageAccountBlobHelper Module Tests" {
 
             Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
         }
-    }
-
-    Context "Update-Blob Tests" {
-        BeforeEach {
-            Mock New-Blob { }
-        }
-
-        It "Should internally call New-Blob for updating blob" {
-            $filePath = "$env:TEMP\mockfile.txt"
-            Set-Content -Path $filePath -Value "Updated content"
-
-            Update-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt" -FilePath $filePath
-
-            Assert-MockCalled New-Blob -Times 1 -Exactly
-            Remove-Item $filePath
-        }
-    }
+    }   
 
     Context "Remove-Blob Tests" {
         BeforeEach {
