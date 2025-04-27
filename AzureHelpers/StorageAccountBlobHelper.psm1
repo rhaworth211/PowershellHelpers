@@ -14,6 +14,10 @@ function Set-StorageManagedIdentity {
     Write-Verbose "Using Managed Identity ClientId: $ClientId"
 }
 
+function Get-ClientId {
+    return $script:ClientId
+}
+
 function Get-AccessToken {
     $resource = "https://storage.azure.com/"
 

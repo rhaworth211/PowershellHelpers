@@ -14,12 +14,12 @@ Describe "StorageAccountBlobHelper Module Tests" {
     Context "Set-StorageManagedIdentity Tests" {
         It "Should set the ClientId variable" {
             Set-StorageManagedIdentity -ClientId "fake-client-id"
-            $ExecutionContext.SessionState.PSVariable.GetValue('script:ClientId') | Should -Be "fake-client-id"
+            (Get-ClientId) | Should -Be "fake-client-id" | Should -Be "fake-client-id"
         }
 
         It "Should clear the ClientId when no parameter is passed" {
             Set-StorageManagedIdentity
-            $ExecutionContext.SessionState.PSVariable.GetValue('script:ClientId') | Should -BeNullOrEmpty
+            (Get-ClientId) | Should -Be "fake-client-id" | Should -BeNullOrEmpty
         }
     }
 
