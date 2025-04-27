@@ -23,10 +23,10 @@ Describe "StorageAccountBlobHelper Module Tests" {
     }
 
     Context "Get-AccessToken Tests" {
-        BeforeEach {            
+        BeforeAll {            
             Mock Invoke-WithRetry { @{ access_token = "mock-token"; expires_in = 3600 } }
         }
-    
+        
         It "Should retrieve and cache an access token" {
             $ExecutionContext.SessionState.PSVariable.Set('script:AccessToken', $null)
             $ExecutionContext.SessionState.PSVariable.Set('script:AccessTokenExpiry', (Get-Date).AddMinutes(-5))
@@ -42,7 +42,7 @@ Describe "StorageAccountBlobHelper Module Tests" {
             $token = Get-AccessToken
             $token | Should -Be "cached-token"
         }
-    }
+    }    
 
     Context "New-Blob Tests" {
         BeforeEach {
