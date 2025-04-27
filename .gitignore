@@ -1,0 +1,29 @@
+# Ignore PowerShell output folders
+/output/
+/Output/
+
+# Ignore temporary files
+*.zip
+*.tmp
+*.log
+*.bak
+
+# Ignore Pester test results (optional if you output to XML, etc.)
+*.TestResults.xml
+
+# Ignore any *.output files anywhere
+*.output
+
+# Ignore build artifacts
+*.nupkg
+
+# Ignore VS Code settings (optional)
+.vscode/
+*.code-workspace
+
+# Ignore system files
+Thumbs.db
+.DS_Store
+
+# Ignore Git folder config backups
+*.orig

@@ -1,0 +1,34 @@
+name: PowerShell Module CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install Pester and NuGet provider
+      shell: pwsh
+      run: |
+        Install-Module Pester -Force -Scope CurrentUser
+        Install-Module PowerShellGet -Force -Scope CurrentUser
+        Install-PackageProvider -Name NuGet -Force
+
+    - name: Run Unit Tests
+      shell: pwsh
+      run: |
+        Invoke-Pester -Script './StorageAccountBlobHelper.Tests.ps1' -Output Detailed
+
+    - name: Publish to PowerShell Gallery
+      if: success()
+      shell: pwsh
+      env:
+        NUGET_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+      run: |
+        Publish-Module -Path './StorageAccountBlobHelper' -NuGetApiKey $env:NUGET_API_KEY

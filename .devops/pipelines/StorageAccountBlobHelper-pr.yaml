@@ -1,0 +1,26 @@
+trigger: none
+
+pr:
+  branches:
+    include:
+    - main
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- task: PowerShell@2
+  displayName: 'Install Pester'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Install-Module Pester -Force -Scope CurrentUser
+      Install-Module PowerShellGet -Force -Scope CurrentUser
+      Install-PackageProvider -Name NuGet -Force
+
+- task: PowerShell@2
+  displayName: 'Run Unit Tests'
+  inputs:
+    targetType: 'inline'
+    script: |
+      Invoke-Pester -Script './StorageAccountBlobHelper.Tests.ps1' -Output Detailed
