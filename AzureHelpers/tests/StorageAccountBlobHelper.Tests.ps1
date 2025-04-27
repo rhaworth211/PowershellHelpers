@@ -1,6 +1,6 @@
 BeforeAll {
     
-    Import-Module "$PSScriptRoot\StorageAccountBlobHelper.psm1" -Force
+    Import-Module "$PSScriptRoot\..\StorageAccountBlobHelper.psm1" -Force
 }
 
 Describe "StorageAccountBlobHelper Module Tests" {
