@@ -24,7 +24,7 @@ Describe "StorageAccountBlobHelper Module Tests" {
 
     Context "Get-AccessToken Tests" {
         BeforeAll {            
-            Mock Invoke-WithRetry { @{ access_token = "mock-token"; expires_in = 3600 } }
+            Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { @{ access_token = "mock-token"; expires_in = 3600 } }
         }
         
         It "Should retrieve and cache an access token" {
