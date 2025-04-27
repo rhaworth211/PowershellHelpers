@@ -24,7 +24,7 @@ Describe "StorageAccountBlobHelper Module Tests" {
 
     Context "Get-AccessToken Tests" {
         Context "When token is expired" {
-            BeforeAll {
+            BeforeAll {                
                 Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { @{ access_token = "mock-token"; expires_in = 3600 } }
             }
     
@@ -35,14 +35,13 @@ Describe "StorageAccountBlobHelper Module Tests" {
                 $token = Get-AccessToken
                 $token | Should -Be "mock-token"
             }
-    
-            AfterAll {
-                                
-                Remove-Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper -ErrorAction SilentlyContinue
-            }
         }
     
         Context "When token is valid and cached" {
+            BeforeAll {                
+                Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { throw "Invoke-WithRetry should not be called if token is cached!" }
+            }
+    
             It "Should use cached token if not expired" {
                 $ExecutionContext.SessionState.PSVariable.Set('script:AccessToken', 'cached-token')
                 $ExecutionContext.SessionState.PSVariable.Set('script:AccessTokenExpiry', (Get-Date).AddMinutes(30))
@@ -51,7 +50,8 @@ Describe "StorageAccountBlobHelper Module Tests" {
                 $token | Should -Be "cached-token"
             }
         }
-    }          
+    }
+            
 
     Context "New-Blob Tests" {
         BeforeEach {
