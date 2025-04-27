@@ -23,12 +23,14 @@ Describe "StorageAccountBlobHelper Module Tests" {
     }
 
     Context "Get-AccessToken Tests" {
-        BeforeEach {
-            Mock Invoke-RestMethod { @{ access_token = "mock-token"; expires_in = 3600 } }
+        BeforeEach {            
+            Mock Invoke-WithRetry { @{ access_token = "mock-token"; expires_in = 3600 } }
         }
 
         It "Should retrieve and cache an access token" {
             $ExecutionContext.SessionState.PSVariable.Set('script:AccessToken', $null)
+            $ExecutionContext.SessionState.PSVariable.Set('script:AccessTokenExpiry', (Get-Date).AddMinutes(-5))
+
             $token = Get-AccessToken
             $token | Should -Be "mock-token"
         }
@@ -45,16 +47,16 @@ Describe "StorageAccountBlobHelper Module Tests" {
     Context "New-Blob Tests" {
         BeforeEach {
             Mock Get-AccessToken { "mock-token" }
-            Mock Invoke-RestMethod { }
+            Mock Invoke-WithRetry { }
         }
 
-        It "Should call Invoke-RestMethod with correct parameters when creating blob" {
+        It "Should call Invoke-WithRetry with correct parameters when creating blob" {
             $filePath = "$env:TEMP\mockfile.txt"
             Set-Content -Path $filePath -Value "Test content"
 
             New-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt" -FilePath $filePath
 
-            Assert-MockCalled Invoke-RestMethod -Times 1 -Exactly
+            Assert-MockCalled Invoke-WithRetry -Times 1 -Exactly
             Remove-Item $filePath
         }
     }
@@ -62,28 +64,28 @@ Describe "StorageAccountBlobHelper Module Tests" {
     Context "Get-Blob Tests" {
         BeforeEach {
             Mock Get-AccessToken { "mock-token" }
-            Mock Invoke-WebRequest { }
+            Mock Invoke-WithRetry { }
         }
 
-        It "Should call Invoke-WebRequest when downloading blob" {
+        It "Should call Invoke-WithRetry when downloading blob" {
             $downloadPath = "$env:TEMP\downloadedfile.txt"
 
             Get-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt" -DownloadPath $downloadPath
 
-            Assert-MockCalled Invoke-WebRequest -Times 1 -Exactly
+            Assert-MockCalled Invoke-WithRetry -Times 1 -Exactly
         }
-    }   
+    }
 
     Context "Remove-Blob Tests" {
         BeforeEach {
             Mock Get-AccessToken { "mock-token" }
-            Mock Invoke-RestMethod { }
+            Mock Invoke-WithRetry { }
         }
 
-        It "Should call Invoke-RestMethod to delete blob" {
+        It "Should call Invoke-WithRetry to delete blob" {
             Remove-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt"
 
-            Assert-MockCalled Invoke-RestMethod -Times 1 -Exactly
+            Assert-MockCalled Invoke-WithRetry -Times 1 -Exactly
         }
     }
 }
