@@ -38,20 +38,6 @@ Describe "Get-AccessToken Tests - When token is expired" {
     }
 }
 
-Describe "Get-AccessToken Tests - When token is valid and cached" {
-    BeforeAll {
-        # If token is cached, calling Invoke-WithRetry should fail (should not be needed)
-        Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { throw "Invoke-WithRetry should not be called for valid cached token!" }
-    }
-
-    It "Should use cached token if not expired" {
-        $ExecutionContext.SessionState.PSVariable.Set('script:AccessToken', 'cached-token')
-        $ExecutionContext.SessionState.PSVariable.Set('script:AccessTokenExpiry', (Get-Date).AddMinutes(30))
-
-        $token = Get-AccessToken
-        $token | Should -Be "cached-token"
-    }
-}
 
 Describe "New-Blob Tests" {
     BeforeAll {

@@ -101,7 +101,7 @@ function New-Blob {
 
     $token = Get-AccessToken
     $url = "https://$StorageAccountName.blob.core.windows.net/$ContainerName/$BlobName"
-    $fileBytes = Get-Content -Path $FilePath -Encoding Byte -ReadCount 0
+    $fileBytes = [System.IO.File]::ReadAllBytes($FilePath)
 
     Invoke-WithRetry -Uri $url -Method PUT -Headers @{
         Authorization = "Bearer $token"
