@@ -13,6 +13,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Cache PowerShell Modules
+      uses: actions/cache@v3
+      with:
+        path: C:\Users\runneradmin\Documents\PowerShell\Modules
+        key: powershell-modules-${{ runner.os }}-${{ hashFiles('**/StorageAccountBlobHelper.Tests.ps1') }}
+        restore-keys: |
+          powershell-modules-${{ runner.os }}-
+          
     - name: Install Pester and NuGet provider
       shell: pwsh
       run: |
