@@ -23,6 +23,4 @@ jobs:
     - name: Run Pester Tests
       shell: pwsh
       run: |
-        Invoke-Pester -Script './StorageAccountBlobHelper.Tests.ps1' -Output Detailed
-
-  git config --global user.name "Ryan Haworth"
+        Invoke-Pester -Script './StorageAccountBlobHelper.Tests.ps1' -Output Detailed  
