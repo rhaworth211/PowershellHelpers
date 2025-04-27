@@ -1,6 +1,12 @@
 BeforeAll {
-    
-    Import-Module "$PSScriptRoot\..\StorageAccountBlobHelper.psm1" -Force
+    # Dynamically find the module path correctly
+    $ModulePath = Join-Path $PSScriptRoot "..\..\StorageAccountBlobHelper\StorageAccountBlobHelper.psm1"
+
+    if (-not (Test-Path $ModulePath)) {
+        throw "Module not found at path: $ModulePath"
+    }
+
+    Import-Module $ModulePath -Force
 }
 
 Describe "StorageAccountBlobHelper Module Tests" {
