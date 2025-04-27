@@ -1,6 +1,6 @@
 BeforeAll {
     # Dynamically find the module path correctly
-    $ModulePath = "..\StorageAccountBlobHelper\StorageAccountBlobHelper.psm1"
+    $ModulePath = Join-Path $PSScriptRoot "..\StorageAccountBlobHelper.psm1"
 
     if (-not (Test-Path $ModulePath)) {
         throw "Module not found at path: $ModulePath"
