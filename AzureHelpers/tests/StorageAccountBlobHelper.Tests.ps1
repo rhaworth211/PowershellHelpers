@@ -23,26 +23,30 @@ Describe "StorageAccountBlobHelper Module Tests" {
     }
 
     Context "Get-AccessToken Tests" {
-        BeforeAll {            
-            Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { @{ access_token = "mock-token"; expires_in = 3600 } }
-        }
+        Context "When token is expired" {
+            BeforeAll {
+                Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { @{ access_token = "mock-token"; expires_in = 3600 } }
+            }
         
-        It "Should retrieve and cache an access token" {
-            $ExecutionContext.SessionState.PSVariable.Set('script:AccessToken', $null)
-            $ExecutionContext.SessionState.PSVariable.Set('script:AccessTokenExpiry', (Get-Date).AddMinutes(-5))
+            It "Should retrieve and cache an access token" {
+                $ExecutionContext.SessionState.PSVariable.Set('script:AccessToken', $null)
+                $ExecutionContext.SessionState.PSVariable.Set('script:AccessTokenExpiry', (Get-Date).AddMinutes(-5))
     
-            $token = Get-AccessToken
-            $token | Should -Be "mock-token"
+                $token = Get-AccessToken
+                $token | Should -Be "mock-token"
+            }
         }
     
-        It "Should use cached token if not expired" {
-            $ExecutionContext.SessionState.PSVariable.Set('script:AccessToken', 'cached-token')
-            $ExecutionContext.SessionState.PSVariable.Set('script:AccessTokenExpiry', (Get-Date).AddMinutes(30))
+        Context "When token is valid and cached" {
+            It "Should use cached token if not expired" {
+                $ExecutionContext.SessionState.PSVariable.Set('script:AccessToken', 'cached-token')
+                $ExecutionContext.SessionState.PSVariable.Set('script:AccessTokenExpiry', (Get-Date).AddMinutes(30))
     
-            $token = Get-AccessToken
-            $token | Should -Be "cached-token"
+                $token = Get-AccessToken
+                $token | Should -Be "cached-token"
+            }
         }
-    }    
+    }       
 
     Context "New-Blob Tests" {
         BeforeEach {
