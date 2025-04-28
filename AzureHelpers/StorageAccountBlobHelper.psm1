@@ -118,7 +118,7 @@ function New-Blob {
     $url = "https://$StorageAccountName.blob.core.windows.net/$ContainerName/$BlobName"
     $fileBytes = [System.IO.File]::ReadAllBytes($FilePath)
 
-    Invoke-WithRetry -Uri $url -Method PUT -Headers @{
+    return Invoke-WithRetry -Uri $url -Method PUT -Headers @{
         Authorization = "Bearer $token"
         "x-ms-blob-type" = "BlockBlob"
         "x-ms-version" = "2021-10-04"
@@ -141,7 +141,7 @@ function Get-Blob {
     $token = Get-AccessToken
     $url = "https://$StorageAccountName.blob.core.windows.net/$ContainerName/$BlobName"
 
-    Invoke-WithRetry -Uri $url `
+    return Invoke-WithRetry -Uri $url `
         -Method GET `
         -Headers @{
             Authorization = "Bearer $token"
@@ -165,7 +165,7 @@ function Remove-Blob {
     $token = Get-AccessToken
     $url = "https://$StorageAccountName.blob.core.windows.net/$ContainerName/$BlobName"
 
-    Invoke-WithRetry -Uri $url `
+    return Invoke-WithRetry -Uri $url `
         -Method DELETE `
         -Headers @{
             Authorization = "Bearer $token"
@@ -173,3 +173,5 @@ function Remove-Blob {
         } `
         -ErrorAction Stop
 }
+
+Export-ModuleMember -Function Set-StorageManagedIdentity, Get-ClientId, Set-AccessToken, Get-AccessToken, New-Blob, Get-Blob, Remove-Blob
