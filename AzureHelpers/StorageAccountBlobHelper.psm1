@@ -1,7 +1,53 @@
 $script:AccessToken = $null
 $script:AccessTokenExpiry = $null
 $script:ClientId = $null
-Import-Module "$PSScriptRoot\RestHelper.psm1" -Force
+
+function Invoke-WithRetry {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [ValidateSet('GET', 'PUT', 'POST', 'DELETE')]
+        [string]$Method,
+
+        [Parameter(Mandatory)]
+        [string]$Uri,
+
+        [Parameter(Mandatory)]
+        [hashtable]$Headers,
+
+        [Parameter(Mandatory = $false)]
+        $Body,
+
+        [Parameter(Mandatory = $false)]
+        [string]$OutFile
+    )
+
+    $maxRetries = 5
+    $retryDelaySeconds = 2
+
+    for ($i = 0; $i -lt $maxRetries; $i++) {
+        try {
+            if ($OutFile) {
+                return Invoke-WebRequest -Uri $Uri -Method $Method -Headers $Headers -OutFile $OutFile -Body $Body -ErrorAction Stop
+            }
+            else {
+                return Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers -Body $Body -ErrorAction Stop
+            }
+        }
+        catch {
+            if ($_.Exception.Response.StatusCode.Value__ -in 429, 500, 502, 503, 504) {
+                Write-Host "Request failed with status $($_.Exception.Response.StatusCode.Value__). Retrying in $retryDelaySeconds seconds..." -ForegroundColor Yellow
+                Start-Sleep -Seconds $retryDelaySeconds
+                $retryDelaySeconds *= 2
+            }
+            else {
+                throw
+            }
+        }
+    }
+
+    throw "Request failed after $maxRetries attempts."
+}
 
 function Set-StorageManagedIdentity {
     [CmdletBinding()]
@@ -12,6 +58,25 @@ function Set-StorageManagedIdentity {
 
     $script:ClientId = $ClientId
     Write-Verbose "Using Managed Identity ClientId: $ClientId"
+}
+
+function Get-ClientId {
+    return $script:ClientId
+}
+
+function Set-AccessToken {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$AccessToken,
+        [Parameter(Mandatory = $false)]
+        [string]$AccessTokenExpiry
+    )
+
+    $script:AccessToken = $AccessToken
+    $script:AccessTokenExpiry = $AccessTokenExpiry
+    Write-Verbose "Using AccessToken: $script:AccessToken"
+    Write-Verbose "Using AccessTokenExpiry: $script:AccessTokenExpiry"
 }
 
 function Get-AccessToken {
@@ -30,7 +95,7 @@ function Get-AccessToken {
             -ErrorAction Stop
 
         $script:AccessToken = $tokenResponse.access_token
-        $script:AccessTokenExpiry = (Get-Date).AddSeconds($tokenResponse.expires_in - 60) # Refresh 1 min early
+        $script:AccessTokenExpiry = (Get-Date).AddSeconds($tokenResponse.expires_in - 60)
     }
 
     return $script:AccessToken
@@ -51,9 +116,9 @@ function New-Blob {
 
     $token = Get-AccessToken
     $url = "https://$StorageAccountName.blob.core.windows.net/$ContainerName/$BlobName"
-    $fileBytes = Get-Content -Path $FilePath -Encoding Byte -ReadCount 0
+    $fileBytes = [System.IO.File]::ReadAllBytes($FilePath)
 
-    Invoke-WithRetry -Uri $url -Method PUT -Headers @{
+    return Invoke-WithRetry -Uri $url -Method PUT -Headers @{
         Authorization = "Bearer $token"
         "x-ms-blob-type" = "BlockBlob"
         "x-ms-version" = "2021-10-04"
@@ -76,7 +141,7 @@ function Get-Blob {
     $token = Get-AccessToken
     $url = "https://$StorageAccountName.blob.core.windows.net/$ContainerName/$BlobName"
 
-    Invoke-WithRetry -Uri $url `
+    return Invoke-WithRetry -Uri $url `
         -Method GET `
         -Headers @{
             Authorization = "Bearer $token"
@@ -100,7 +165,7 @@ function Remove-Blob {
     $token = Get-AccessToken
     $url = "https://$StorageAccountName.blob.core.windows.net/$ContainerName/$BlobName"
 
-    Invoke-WithRetry -Uri $url `
+    return Invoke-WithRetry -Uri $url `
         -Method DELETE `
         -Headers @{
             Authorization = "Bearer $token"
@@ -108,3 +173,5 @@ function Remove-Blob {
         } `
         -ErrorAction Stop
 }
+
+Export-ModuleMember -Function Set-StorageManagedIdentity, Get-ClientId, Set-AccessToken, Get-AccessToken, New-Blob, Get-Blob, Remove-Blob
