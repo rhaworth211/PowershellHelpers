@@ -87,16 +87,14 @@ Describe "Get-Blob Tests" {
     }    
 }
 
-Describe "Remove-Blob Tests" {
-    InModuleScope StorageAccountBlobHelper {
-        BeforeAll {
-            Mock -CommandName Get-AccessToken { "mock-token" }
-            Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { @{ StatusCode = 201 } }
-        }
-
-        It "Should call Invoke-WithRetry to delete blob" {
-            $result = Remove-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt"
-            $result.StatusCode | Should -Be 201            
-        }
+Describe "Remove-Blob Tests" {    
+    BeforeAll {
+        Mock -CommandName Get-AccessToken { "mock-token" }
+        Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { @{ StatusCode = 201 } }
     }
+
+    It "Should call Invoke-WithRetry to delete blob" {
+        $result = Remove-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt"
+        $result.StatusCode | Should -Be 201            
+    }    
 }
