@@ -32,7 +32,7 @@ jobs:
     - name: Run Unit Tests
       shell: pwsh
       run: |
-        Invoke-Pester -Script './AzureHelpers/tests/StorageAccountBlobHelper.Tests.ps1' -Output Detailed -Passthru | Tee-Object -Variable testResults
+        Invoke-Pester -Script './StorageAccountBlobHelper/tests/StorageAccountBlobHelper.Tests.ps1' -Output Detailed -Passthru | Tee-Object -Variable testResults
         if ($testResults.FailedCount -gt 0) {
           Write-Error "One or more Pester tests failed."
           exit 1
@@ -44,4 +44,4 @@ jobs:
       env:
         NUGET_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
       run: |
-        Publish-Module -Path './AzureHelpers' -NuGetApiKey $env:NUGET_API_KEY
+        Publish-Module -Path './StorageAccountBlobHelper' -NuGetApiKey $env:NUGET_API_KEY
