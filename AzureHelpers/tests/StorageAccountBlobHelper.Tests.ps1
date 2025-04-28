@@ -24,62 +24,80 @@ Describe "StorageAccountBlobHelper Module Tests" {
 }
 
 Describe "Get-AccessToken Tests - When token is expired" {
-    BeforeAll {
-        # Mock token retrieval when expired
+    BeforeAll {        
         Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { @{ access_token = "mock-token"; expires_in = 3600 } }
     }
 
     It "Should retrieve and cache an access token when expired" {
-        $ExecutionContext.SessionState.PSVariable.Set('script:AccessToken', $null)
-        $ExecutionContext.SessionState.PSVariable.Set('script:AccessTokenExpiry', (Get-Date).AddMinutes(-5))
+
+        Set-AccessToken -AccessToken $null -AccessTokenExpiry (Get-Date).AddMinutes(-5)       
 
         $token = Get-AccessToken
         $token | Should -Be "mock-token"
     }
 }
 
-
-Describe "New-Blob Tests" {
-    BeforeAll {
-        Mock -CommandName Get-AccessToken -ModuleName StorageAccountBlobHelper { "mock-token" }
-        Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { }
+Describe "Get-AccessToken Tests - When token is valid and cached" {
+    BeforeAll {        
+        Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { throw "Invoke-WithRetry should not be called for cached tokens!" }
     }
 
-    It "Should call Invoke-WithRetry with correct parameters when creating blob" {
-        $filePath = "$env:TEMP\mockfile.txt"
-        [System.IO.File]::WriteAllText($filePath, "Test content")
+    It "Should use cached token if not expired" {
+        Set-AccessToken -AccessToken 'cached-token' -AccessTokenExpiry (Get-Date).AddMinutes(30)         
 
-        New-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt" -FilePath $filePath
+        $token = Get-AccessToken
+        $token | Should -Be "cached-token"
+    }
+}
 
-        Assert-MockCalled Invoke-WithRetry -Times 1 -Exactly
-        Remove-Item $filePath
+
+Describe "New-Blob Tests" {
+    InModuleScope StorageAccountBlobHelper {
+        BeforeAll {
+            Mock -CommandName Get-AccessToken { "mock-token" }
+            Mock -CommandName Invoke-WithRetry { }
+        }
+
+        It "Should call Invoke-WithRetry with correct parameters when creating blob" {
+            $filePath = "$env:TEMP\mockfile.txt"
+            [System.IO.File]::WriteAllText($filePath, "Test content")
+
+            New-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt" -FilePath $filePath
+
+            Assert-MockCalled Invoke-WithRetry -Times 1 -Exactly
+            Remove-Item $filePath
+        }
     }
 }
 
 Describe "Get-Blob Tests" {
-    BeforeAll {
-        Mock -CommandName Get-AccessToken -ModuleName StorageAccountBlobHelper { "mock-token" }
-        Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { }
-    }
+    InModuleScope StorageAccountBlobHelper {
+        BeforeAll {
+            Mock -CommandName Get-AccessToken { "mock-token" }
+            Mock -CommandName Invoke-WithRetry { }
+        }
 
-    It "Should call Invoke-WithRetry when downloading blob" {
-        $downloadPath = "$env:TEMP\downloadedfile.txt"
+        It "Should call Invoke-WithRetry when downloading blob" {
+            $downloadPath = "$env:TEMP\downloadedfile.txt"
 
-        Get-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt" -DownloadPath $downloadPath
+            Get-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt" -DownloadPath $downloadPath
 
-        Assert-MockCalled Invoke-WithRetry -Times 1 -Exactly
+            Assert-MockCalled Invoke-WithRetry -Times 1 -Exactly
+        }
     }
 }
 
 Describe "Remove-Blob Tests" {
-    BeforeAll {
-        Mock -CommandName Get-AccessToken -ModuleName StorageAccountBlobHelper { "mock-token" }
-        Mock -CommandName Invoke-WithRetry -ModuleName StorageAccountBlobHelper { }
-    }
+    InModuleScope StorageAccountBlobHelper {
+        BeforeAll {
+            Mock -CommandName Get-AccessToken { "mock-token" }
+            Mock -CommandName Invoke-WithRetry { }
+        }
 
-    It "Should call Invoke-WithRetry to delete blob" {
-        Remove-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt"
+        It "Should call Invoke-WithRetry to delete blob" {
+            Remove-Blob -StorageAccountName "mockstorage" -ContainerName "mockcontainer" -BlobName "mockblob.txt"
 
-        Assert-MockCalled Invoke-WithRetry -Times 1 -Exactly
+            Assert-MockCalled Invoke-WithRetry -Times 1 -Exactly
+        }
     }
 }

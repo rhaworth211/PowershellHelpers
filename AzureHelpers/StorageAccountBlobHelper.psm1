@@ -64,6 +64,21 @@ function Get-ClientId {
     return $script:ClientId
 }
 
+function Set-AccessToken {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$AccessToken,
+        [Parameter(Mandatory = $false)]
+        [string]$AccessTokenExpiry
+    )
+
+    $script:AccessToken = $AccessToken
+    $script:AccessTokenExpiry = $AccessTokenExpiry
+    Write-Verbose "Using AccessToken: $script:AccessToken"
+    Write-Verbose "Using AccessTokenExpiry: $script:AccessTokenExpiry"
+}
+
 function Get-AccessToken {
     $resource = "https://storage.azure.com/"
 
@@ -80,7 +95,7 @@ function Get-AccessToken {
             -ErrorAction Stop
 
         $script:AccessToken = $tokenResponse.access_token
-        $script:AccessTokenExpiry = (Get-Date).AddSeconds($tokenResponse.expires_in - 60) # Refresh 1 min early
+        $script:AccessTokenExpiry = (Get-Date).AddSeconds($tokenResponse.expires_in - 60)
     }
 
     return $script:AccessToken
