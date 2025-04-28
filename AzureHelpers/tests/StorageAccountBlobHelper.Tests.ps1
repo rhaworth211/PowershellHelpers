@@ -5,7 +5,7 @@ BeforeAll {
         throw "Module not found at path: $ModulePath"
     }
 
-    Import-Module $ModulePath -Force
+    Import-Module $ModulePath -Force -Name StorageAccountBlobHelper
 }
 
 Describe "StorageAccountBlobHelper Module Tests" {
