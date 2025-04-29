@@ -1,4 +1,4 @@
-name: PR Validation
+name: Powershell Storage Account Blob Helper PR Validation
 
 on:
   pull_request:
