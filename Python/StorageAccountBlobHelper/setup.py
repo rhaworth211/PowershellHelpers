@@ -1,15 +1,24 @@
 import os
 from setuptools import setup, find_packages
 
+this_directory = os.path.abspath(os.path.dirname(__file__))
+readme_path = os.path.join(this_directory, "README.md")
+
+try:
+    with open(readme_path, encoding="utf-8") as f:
+        long_description = f.read()
+except FileNotFoundError:
+    long_description = "A simple helper for Azure Blob Storage operations."
+
 setup(
     name="StorageAccountBlobHelper",
     version="0.1.0",
     author="Your Name",
     author_email="your.email@example.com",
     description="A simple helper for Azure Blob Storage operations using Managed Identity or Default Azure Credential.",
-    long_description=open("README.md", encoding="utf-8").read(),
+    long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/StorageAccountBlobHelper",  # Optional
+    url="https://github.com/rhaworth211/StorageAccountBlobHelper",
     packages=find_packages(),
     install_requires=[
         "azure-identity>=1.7.0",
