@@ -1,10 +1,9 @@
 name: Python Storage Account Blob Helper PR Validation
-# This workflow validates pull requests for the Python Storage Account Blob Helper project.
 
 on:
   pull_request:
     branches:
-      - main  # or 'master', depending on your default branch
+      - main
 
 jobs:
   build-and-test:
@@ -17,19 +16,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'  # Adjust if needed
-      - name: Show current path
-        run: |
-          echo "Current directory:"
-          pwd
-          echo "Directory listing:"
-          ls -la
+          python-version: '3.11'      
+
       - name: Install dependencies
+        working-directory: Python/StorageAccountBlobHelper
         run: |
           python -m pip install --upgrade pip
-          pip install -r Python/StorageAccountBlobHelper/requirements.txt
+          pip install -r requirements.txt
           pip install .
 
       - name: Run tests
+        working-directory: Python/StorageAccountBlobHelper
         run: |
           python -m unittest discover -s . -p "*Tests.py"
