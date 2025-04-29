@@ -1,6 +1,6 @@
 # StorageAccountBlobHelper
 
-A lightweight Python module to simplify working with Azure Blob Storage using Managed Identity or Default Azure Credentials.
+A lightweight Python module to simplify working with Azure Blob Storage using User Assigned Managed Identity or Default Azure Credentials.
 
 ## Features
 
