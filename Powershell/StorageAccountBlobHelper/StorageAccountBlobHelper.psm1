@@ -19,34 +19,48 @@ function Invoke-WithRetry {
         $Body,
 
         [Parameter(Mandatory = $false)]
-        [string]$OutFile
+        [string]$OutFile,
+
+        [Parameter()]
+        [int]$MaxRetries = 5,
+
+        [Parameter()]
+        [int]$RetryDelaySeconds = 2
     )
 
-    $maxRetries = 5
-    $retryDelaySeconds = 2
+    if ($OutFile -and $Body) {
+        throw "Cannot specify both OutFile and Body."
+    }
 
-    for ($i = 0; $i -lt $maxRetries; $i++) {
+    $currentRetryDelay = $RetryDelaySeconds
+
+    for ($i = 0; $i -lt $MaxRetries; $i++) {
+        $oldErrorActionPreference = $ErrorActionPreference
+        $ErrorActionPreference = 'Stop'
         try {
             if ($OutFile) {
-                return Invoke-WebRequest -Uri $Uri -Method $Method -Headers $Headers -OutFile $OutFile -Body $Body -ErrorAction Stop
+                return Invoke-WebRequest -Uri $Uri -Method $Method -Headers $Headers -OutFile $OutFile
             }
             else {
-                return Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers -Body $Body -ErrorAction Stop
+                return Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers -Body $Body
             }
         }
         catch {
             if ($_.Exception.Response.StatusCode.Value__ -in 429, 500, 502, 503, 504) {
-                Write-Host "Request failed with status $($_.Exception.Response.StatusCode.Value__). Retrying in $retryDelaySeconds seconds..." -ForegroundColor Yellow
-                Start-Sleep -Seconds $retryDelaySeconds
-                $retryDelaySeconds *= 2
+                Write-Host "Request failed with status $($_.Exception.Response.StatusCode.Value__). Retrying in $currentRetryDelay seconds..." -ForegroundColor Yellow
+                Start-Sleep -Seconds $currentRetryDelay
+                $currentRetryDelay *= 2
             }
             else {
                 throw
             }
         }
+        finally {
+            $ErrorActionPreference = $oldErrorActionPreference
+        }
     }
 
-    throw "Request failed after $maxRetries attempts."
+    throw "Request failed after $MaxRetries attempts."
 }
 
 function Set-StorageManagedIdentity {
@@ -83,16 +97,16 @@ function Get-AccessToken {
     $resource = "https://storage.azure.com/"
 
     if (-not $script:AccessToken -or (Get-Date) -ge $script:AccessTokenExpiry) {
-        $metadataUri = "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2019-08-01&resource=$resource"
-        
+        $queryParams = "api-version=2019-08-01&resource=$resource"
         if ($script:ClientId) {
-            $metadataUri += "&client_id=$($script:ClientId)"
+            $queryParams += "&client_id=$($script:ClientId)"
         }
+
+        $metadataUri = "http://169.254.169.254/metadata/identity/oauth2/token?$queryParams"
 
         $tokenResponse = Invoke-WithRetry -Uri $metadataUri `
             -Method GET `
-            -Headers @{Metadata="true"} `
-            -ErrorAction Stop
+            -Headers @{Metadata="true"}
 
         $script:AccessToken = $tokenResponse.access_token
         $script:AccessTokenExpiry = (Get-Date).AddSeconds($tokenResponse.expires_in - 60)
@@ -106,12 +120,19 @@ function New-Blob {
     param (
         [Parameter(Mandatory)]
         [string]$StorageAccountName,
+
         [Parameter(Mandatory)]
         [string]$ContainerName,
+
         [Parameter(Mandatory)]
         [string]$BlobName,
+
         [Parameter(Mandatory)]
-        [string]$FilePath
+        [string]$FilePath,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("BlockBlob", "AppendBlob", "PageBlob")]
+        [string]$BlobType = "BlockBlob"
     )
 
     $token = Get-AccessToken
@@ -120,7 +141,7 @@ function New-Blob {
 
     return Invoke-WithRetry -Uri $url -Method PUT -Headers @{
         Authorization = "Bearer $token"
-        "x-ms-blob-type" = "BlockBlob"
+        "x-ms-blob-type" = $BlobType
         "x-ms-version" = "2021-10-04"
     } -Body $fileBytes
 }
@@ -130,10 +151,13 @@ function Get-Blob {
     param (
         [Parameter(Mandatory)]
         [string]$StorageAccountName,
+
         [Parameter(Mandatory)]
         [string]$ContainerName,
+
         [Parameter(Mandatory)]
         [string]$BlobName,
+
         [Parameter(Mandatory)]
         [string]$DownloadPath
     )
@@ -147,8 +171,7 @@ function Get-Blob {
             Authorization = "Bearer $token"
             "x-ms-version" = "2021-10-04"
         } `
-        -OutFile $DownloadPath `
-        -ErrorAction Stop
+        -OutFile $DownloadPath
 }
 
 function Remove-Blob {
@@ -156,8 +179,10 @@ function Remove-Blob {
     param (
         [Parameter(Mandatory)]
         [string]$StorageAccountName,
+
         [Parameter(Mandatory)]
         [string]$ContainerName,
+
         [Parameter(Mandatory)]
         [string]$BlobName
     )
@@ -170,8 +195,7 @@ function Remove-Blob {
         -Headers @{
             Authorization = "Bearer $token"
             "x-ms-version" = "2021-10-04"
-        } `
-        -ErrorAction Stop
+        }
 }
 
 Export-ModuleMember -Function Set-StorageManagedIdentity, Get-ClientId, Set-AccessToken, Get-AccessToken, New-Blob, Get-Blob, Remove-Blob
