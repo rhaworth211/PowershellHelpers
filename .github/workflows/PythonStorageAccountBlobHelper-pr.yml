@@ -1,4 +1,5 @@
-name: PR Tests
+name: Python Storage Account Blob Helper PR Validation
+# This workflow validates pull requests for the Python Storage Account Blob Helper project.
 
 on:
   pull_request:
