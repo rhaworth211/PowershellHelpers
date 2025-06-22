@@ -1,26 +1,18 @@
-name: PR Validation
+name: PowerShell Module CI
 
 on:
-  pull_request:
+  push:
     branches:
       - main
 
 jobs:
-  test:
+  build:
     runs-on: windows-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Cache PowerShell Modules
-      uses: actions/cache@v3
-      with:
-        path: C:\Users\runneradmin\Documents\PowerShell\Modules
-        key: powershell-modules-${{ runner.os }}-${{ hashFiles('**/StorageAccountBlobHelper.Tests.ps1') }}
-        restore-keys: |
-          powershell-modules-${{ runner.os }}-
-          
     - name: Install Pester and NuGet provider
       shell: pwsh
       run: |
@@ -37,7 +29,19 @@ jobs:
 
         Import-Module Pester -Force
 
-    - name: Run Pester Tests
+    - name: Run Unit Tests
       shell: pwsh
       run: |
-        Invoke-Pester -Script './StorageAccountBlobHelper.Tests.ps1' -Output Detailed
+        Invoke-Pester -Script './Powershell/StorageAccountBlobHelper/tests/StorageAccountBlobHelper.Tests.ps1' -Output Detailed -Passthru | Tee-Object -Variable testResults
+        if ($testResults.FailedCount -gt 0) {
+          Write-Error "One or more Pester tests failed."
+          exit 1
+        }
+
+    - name: Publish to PowerShell Gallery
+      if: success()
+      shell: pwsh
+      env:
+        NUGET_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+      run: |
+        Publish-Module -Path './Powershell/StorageAccountBlobHelper' -NuGetApiKey $env:NUGET_API_KEY
